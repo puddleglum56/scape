@@ -6,17 +6,11 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using BluetoothUtil
 
-
-
-public class SimpleTest : MonoBehaviour
+public class BluetoothConnector: MonoBehaviour
 {
     public string DeviceName = "DW5B19";
-    public string TagName = "DW5B19";
-    public string InitiatorName = "DW51A7";
-    public string[] AnchorNames = new string[] { "DW51A7", "DW8428", "DW8E23", "DW092D" };
-    public string ServiceUUID = "680c21d9-c946-4c1f-9c11-baa1c21329e7";
-    public string SubscribeCharacteristic = "003bbdf2-c634-4b3d-ab56-7ec889b89a37";
 
     enum States
     {
@@ -50,6 +44,10 @@ public class SimpleTest : MonoBehaviour
     private float DistanceUpdateInterval = 0.3f; //note: verify the update interval
     private int[] lowPassDistances = null;
 
+
+	void Initialize(string DeviceName, string ServiceUUID, string SubscribeCharacteristic)
+	{
+	}
 
     void Reset()
     {
@@ -344,56 +342,6 @@ public class SimpleTest : MonoBehaviour
 		});
 	}
     */
-
-    byte[] HexStringToBytes(string hexString)
-    {
-        byte[] bytes = new byte[hexString.Length / 2];
-
-        int c = 0;
-        for (int i = 0; i < (hexString.Length); i += 2)
-        {
-            string hexChar = String.Concat(hexString[i], hexString[i + 1]);
-            byte byteRepresentation = byte.Parse(hexChar, System.Globalization.NumberStyles.AllowHexSpecifier);
-            bytes[c] = byteRepresentation;
-            c++;
-        }
-        return bytes;
-    }
-
-    int BytesToInt(byte[] bytes)
-    {
-        //Array.Reverse(bytes); // Bluetooth convention is little-endian so need to reverse order to big-endian
-        return BitConverter.ToInt32(bytes, 0);
-    }
-
-    string BytesToHex(byte[] bytes)
-    {
-        return BitConverter.ToString(bytes).Replace("-", "");
-    }
-
-    int DistanceToNode(string nodeIdSequence, byte[] distanceData)
-    {
-        string distanceDataHex = BytesToHex(distanceData);
-        int nodeIndex = distanceDataHex.IndexOf(nodeIdSequence);
-        int distanceLengthInBytes = 4;
-        byte[] nodeDistanceBytes = new byte[distanceLengthInBytes];
-        for (int i = 0; i < distanceLengthInBytes; i++)
-        {
-            nodeDistanceBytes[i] = distanceData[nodeIndex / 2 + nodeIdSequence.Length / 2 + i];
-        }
-        return BytesToInt(nodeDistanceBytes);
-    }
-
-    string NodeNameToNodeId(string nodeName)
-    {
-        string nodeId = "";
-        for (int i = nodeName.Length; i > 2; i -= 2)
-        {
-            nodeId += String.Concat(nodeName[i - 2], nodeName[i - 1]);
-        }
-        return nodeId;
-
-    }
 
     float getVelocity(int currentDistance, int prevDistance, float deltaTime)
     {
