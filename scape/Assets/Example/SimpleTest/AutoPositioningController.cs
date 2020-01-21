@@ -24,10 +24,16 @@ public class AutoPositioningController: MonoBehaviour
 
     //hard-coding for now, maybe eventually we can have a better UI for this
     private Matrix<double> knownTagPositions = DenseMatrix.OfArray(new double[,] {
-        {0, 0, 55},
-        {356, 0, 55},
-        {356, 356, 55},
-        {0, 356, 55}
+        {0, 0, 0},
+        {393, 0, 0},
+        {393, 306, 144},
+        {0, 306, 144}
+    });
+
+    private Matrix<double> bounds = DenseMatrix.OfArray(new double[,]
+    {
+        {-2000, -1000, 0 },
+        { 2000, 4000, 3000}
     });
 
     public BluetoothConnector BluetoothConnector = null;
@@ -78,7 +84,7 @@ public class AutoPositioningController: MonoBehaviour
         //TODO: some assertion to make sure the ranges dict is full
         foreach (string anchorName in AnchorNames)
         {
-            MLAT.GdescentResult result = MLAT.mlat(knownTagPositions, anchorToTestPoints[anchorName]);
+            MLAT.GdescentResult result = MLAT.mlat(knownTagPositions, anchorToTestPoints[anchorName], bounds);
             anchorPositions[anchorName] = result.estimator;
         }
     }
