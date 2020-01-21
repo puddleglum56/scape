@@ -335,7 +335,7 @@ public class BluetoothConnector: MonoBehaviour
 
     void OnGUI()
     {
-        GUI.skin.textArea.fontSize = 32;
+        GUI.skin.textArea.fontSize = 10;
         GUI.skin.button.fontSize = 32;
         GUI.skin.toggle.fontSize = 32;
         GUI.skin.label.fontSize = 32;
@@ -352,48 +352,11 @@ public class BluetoothConnector: MonoBehaviour
                 {
                     data += "getting bytes\n";
                     data += BluetoothBytes.MakeFromBytes(_dataBytes).ToHex();
-                    //data += String.Concat(DeviceName," ", DistanceUtil.InfoForNodeName(DeviceName, BluetoothBytes.MakeFromBytes(_dataBytes), 4),"\n");
-
-                    /*
-                    Vector3 gravity = Input.gyro.gravity;
-                    Vector3 acceleration = Input.acceleration - gravity;
-                    data += String.Concat("x ", acceleration.x, "\n");
-                    data += String.Concat("y ", acceleration.y, "\n");
-                    data += String.Concat("z ", acceleration.z, "\n");
-                    */
-
-                    //transform.rotation = GyroToUnity(Input.gyro.attitude);
                 }
             }
 
         }
-        GUI.TextArea(new Rect(0, 600, Screen.width, Screen.height - 600), data);
-        /*
-        else if (_state == States.ScanRSSI)
-        {
-            if (GUI.Button(new Rect(10, 10, Screen.width - 10, 100), "Stop Scanning"))
-            {
-                BluetoothLEHardwareInterface.StopScan();
-                SetState(States.Disconnect, 0.5f);
-            }
-
-            if (_rssi != 0)
-                GUI.Label(new Rect(10, 300, Screen.width - 10, 50), string.Format("RSSI: {0}", _rssi));
-        }
-        else if (_state == States.None)
-        {
-            if (GUI.Button(new Rect(10, 10, Screen.width - 10, 100), "Connect"))
-                StartProcess();
-
-            _rssiOnly = GUI.Toggle(new Rect(10, 200, Screen.width - 10, 50), _rssiOnly, "Just Show RSSI");
-        }
-        */
+        GUI.TextArea(new Rect(0, Screen.height - 200, Screen.width, 200), data);
     }
-
-    private static Quaternion GyroToUnity(Quaternion q)
-    {
-        return new Quaternion(q.x, q.y, -q.z, -q.w);
-    }
-
 }
 

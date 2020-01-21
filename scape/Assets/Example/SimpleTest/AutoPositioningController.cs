@@ -101,29 +101,29 @@ public class AutoPositioningController: MonoBehaviour
 
     void OnGUI()
     {
-        GUI.skin.textArea.fontSize = 26;
-        GUI.skin.button.fontSize = 32;
-        GUI.skin.toggle.fontSize = 32;
-        GUI.skin.label.fontSize = 32;
+        GUI.skin.textArea.fontSize = 20;
+        GUI.skin.button.fontSize = 20;
+        GUI.skin.toggle.fontSize = 20;
+        GUI.skin.label.fontSize = 20;
 
-        if (GUI.Button(new Rect(10, 10, 100, 50), "0"))
+        if (GUI.Button(new Rect(0, 10, Screen.width, 100), "0"))
             GetAnchorDistancesForTestPoint(0);
 
-        if (GUI.Button(new Rect(10, 70, 100, 50), "1"))
+        if (GUI.Button(new Rect(0, 120, Screen.width, 100), "1"))
             GetAnchorDistancesForTestPoint(1);
 
-        if (GUI.Button(new Rect(10, 130, 100, 50), "2"))
+        if (GUI.Button(new Rect(0, 230, Screen.width, 100), "2"))
             GetAnchorDistancesForTestPoint(2);
 
-        if (GUI.Button(new Rect(10, 190, 100, 50), "3"))
+        if (GUI.Button(new Rect(0, 340, Screen.width, 100), "3"))
             GetAnchorDistancesForTestPoint(3);
 
-        if (GUI.Button(new Rect(10, 250, 100, 50), "Done"))
+        if (GUI.Button(new Rect(0, 450, Screen.width, 100), "Done"))
         {
             CalculateAnchorPositions();
         }
 
-        if (GUI.Button(new Rect(10, 250, 100, 50), "Disconnect"))
+        if (GUI.Button(new Rect(0, 560, Screen.width, 100), "Disconnect"))
             BluetoothConnector.Disconnect();
 
         string data = "";
@@ -141,6 +141,23 @@ public class AutoPositioningController: MonoBehaviour
             }
         }
 
-        GUI.TextArea(new Rect(10, 310, 100, 50), data);
+        GUI.TextArea(new Rect(0, 670, Screen.width, 300), data);
+
+        data = "";
+        if (anchorToTestPoints != null)
+        {
+            foreach (string anchorName in AnchorNames)
+            {
+                data += anchorName;
+                data += ": ";
+                foreach (double component in anchorToTestPoints[anchorName])
+                {
+                    data += component.ToString() + ",";
+                }
+                data += "\n";
+            }
+        }
+
+        GUI.TextArea(new Rect(0, 980, Screen.width, 300), data);
     }
 }
