@@ -5,12 +5,13 @@
 
 using System;
 using UnityEngine;
+using System.Linq;
 
 public class BluetoothConnector: MonoBehaviour
 {
     private string DeviceName;
     private string ServiceUUID;
-    private string SubscribeCharacteristic;
+    private string ActionCharacteristic;
 
     public enum States
     {
@@ -20,10 +21,18 @@ public class BluetoothConnector: MonoBehaviour
         Connect,
         Read,
         Subscribe,
+        Write,
         Unsubscribe,
         Disconnect,
         Disconnected,
     }
+
+    private States[] actionStates =
+    {
+        States.Read,
+        States.Subscribe,
+        States.Write
+    };
 
     private bool _initialized = false;
     private bool _connected = false;
@@ -33,13 +42,15 @@ public class BluetoothConnector: MonoBehaviour
     private bool _foundSubscribeID = false;
     private bool _foundWriteID = false;
     byte[] _dataBytes = null;
+    byte[] _dataToWrite = null;
     private bool _rssiOnly = false;
     private int _rssi = 0;
-    private string _action = "subscribe";
+    private States _action = States.Subscribe;
+    private bool _actionSuccess = false;
 
-    private string StateToString()
+    private string StateToString(States state)
     {
-        switch (_state)
+        switch (state)
         {
             case States.None: return "None";
             case States.Scan: return "Scan";
@@ -47,12 +58,12 @@ public class BluetoothConnector: MonoBehaviour
             case States.Connect: return "Connect";
             case States.Read: return "Read";
             case States.Subscribe: return "Subscribe";
+            case States.Write: return "Write";
             case States.Unsubscribe: return "Unsubscribe";
             case States.Disconnect: return "Disconnect";
             case States.Disconnected: return "Disconnected";
             default: return "Default";
         }
-
     }
 
     public void Disconnect()
@@ -60,13 +71,16 @@ public class BluetoothConnector: MonoBehaviour
         SetState(States.Unsubscribe, 1f);
     }
 
-	public void InitializeReadOrSubscribeValues(string DeviceName, string ServiceUUID, string SubscribeCharacteristic, string action)
+	public void InitializeAction(string DeviceName, string ServiceUUID, string ActionCharacteristic, States action, byte[] bytesToWrite = null)
 	{
+        if (!(actionStates.Contains(action)))
+            Debug.Log("WARNING: InitializeAction called with not an action state (ie. not read, write, or subscribe)");
+        _dataToWrite = bytesToWrite;
         this.DeviceName = DeviceName;
         this.ServiceUUID = ServiceUUID;
-        this.SubscribeCharacteristic = SubscribeCharacteristic;
+        this.ActionCharacteristic = ActionCharacteristic;
         this._action = action;
-        Debug.Log("initialize called for anchor name "+DeviceName+"with action "+action);
+        Debug.Log("initialize called for anchor name "+DeviceName+"with action "+StateToString(action));
 	}
 
     public void Reset()
@@ -79,6 +93,8 @@ public class BluetoothConnector: MonoBehaviour
         _foundWriteID = false;
         _dataBytes = null;
         _rssi = 0;
+        _action = States.Subscribe;
+        _actionSuccess = false;
     }
 
     void SetState(States newState, float timeout)
@@ -114,13 +130,17 @@ public class BluetoothConnector: MonoBehaviour
         }
     }
 
-    // Use this for initialization
-    void Start()
+    public States currentAction()
     {
-        //StartProcess();
+        return _action;
     }
 
-    public byte[] CurrentBytes()
+    public bool actionSuccessful()
+    {
+        return _actionSuccess;
+    }
+
+    public byte[] currentBytes()
     {
         return _dataBytes;
     }
@@ -213,7 +233,7 @@ public class BluetoothConnector: MonoBehaviour
 
                             if (IsEqual(serviceUUID, ServiceUUID))
                             {
-                                _foundSubscribeID = _foundSubscribeID || IsEqual(characteristicUUID, SubscribeCharacteristic);
+                                _foundSubscribeID = _foundSubscribeID || IsEqual(characteristicUUID, ActionCharacteristic);
 
                                 // if we have found both characteristics that we are waiting for
                                 // set the state. make sure there is enough timeout that if the
@@ -222,36 +242,27 @@ public class BluetoothConnector: MonoBehaviour
                                 if (_foundSubscribeID)
                                 {
                                     _connected = true;
-                                    switch (_action)
-                                    {
-                                        case "subscribe":
-                                            SetState(States.Subscribe, 2f);
-                                            break;
-                                        case "read":
-                                            Debug.Log("setting read");
-                                            SetState(States.Read, 0.5f);
-                                            break;
-                                        
-                                    }
+                                    SetState(_action, 2f);
                                 }
                             }
                         });
                         break;
 
                     case States.Read:
-                        Debug.Log("trying to read " + SubscribeCharacteristic);
-                        BluetoothLEHardwareInterface.ReadCharacteristic(_deviceAddress, ServiceUUID, SubscribeCharacteristic, (characteristic, bytes) =>
+                        Debug.Log("trying to read " + ActionCharacteristic);
+                        BluetoothLEHardwareInterface.ReadCharacteristic(_deviceAddress, ServiceUUID, ActionCharacteristic, (characteristic, bytes) =>
                         {
                             Debug.Log("read complete");
                             _state = States.None;
                             _dataBytes = bytes;
+                            _actionSuccess = true;
 
                         });
                         break;
 
                     case States.Subscribe:
-                        Debug.Log("trying to subscribe " + SubscribeCharacteristic);
-                        BluetoothLEHardwareInterface.SubscribeCharacteristicWithDeviceAddress(_deviceAddress, ServiceUUID, SubscribeCharacteristic, null, (address, characteristicUUID, bytes) =>
+                        Debug.Log("trying to subscribe " + ActionCharacteristic);
+                        BluetoothLEHardwareInterface.SubscribeCharacteristicWithDeviceAddress(_deviceAddress, ServiceUUID, ActionCharacteristic, null, (address, characteristicUUID, bytes) =>
                         {
 
                             // we don't have a great way to set the state other than waiting until we actually got
@@ -261,11 +272,19 @@ public class BluetoothConnector: MonoBehaviour
 
                             // we received some data from the device
                             _dataBytes = bytes;
+                            _actionSuccess = true;
+                        });
+                        break;
+
+                    case States.Write:
+                        BluetoothLEHardwareInterface.WriteCharacteristic (_deviceAddress, ServiceUUID, ActionCharacteristic, _dataToWrite, _dataToWrite.Length, true, (characteristicUUID) => {
+                            BluetoothLEHardwareInterface.Log ("Write Succeeded");
+                            _actionSuccess = true;
                         });
                         break;
 
                     case States.Unsubscribe:
-                        BluetoothLEHardwareInterface.UnSubscribeCharacteristic(_deviceAddress, ServiceUUID, SubscribeCharacteristic, null);
+                        BluetoothLEHardwareInterface.UnSubscribeCharacteristic(_deviceAddress, ServiceUUID, ActionCharacteristic, null);
                         SetState(States.Disconnect, 4f);
                         break;
 
@@ -276,47 +295,17 @@ public class BluetoothConnector: MonoBehaviour
                             {
                                 _connected = false;
                                 _state = States.Disconnected;
-                                /*
-                                BluetoothLEHardwareInterface.DeInitialize(() =>
-                                {
-                                    _connected = false;
-                                    _state = States.Disconnected;
-
-                                });
-                                */
                             });
                         }
                         else
                         {
                             _state = States.Disconnected;
-                            /*
-                            BluetoothLEHardwareInterface.DeInitialize(() =>
-                            {
-                                _state = States.Disconnected;
-                            });
-                            */
                         }
                         break;
                 }
             }
         }
     }
-
-    private bool ledON = false;
-    /*
-	public void OnLED ()
-	{
-		ledON = !ledON;
-		if (ledON)
-		{
-			SendByte ((byte)0x01);
-		}
-		else
-		{
-			SendByte ((byte)0x00);
-		}
-	}
-    */
 
     string FullUUID(string uuid)
     {
@@ -354,7 +343,7 @@ public class BluetoothConnector: MonoBehaviour
 
 
         string data = "";
-        data += StateToString() + "\n";
+        data += StateToString(_state) + "\n";
         if (_connected)
         {
             if (_state == States.None)

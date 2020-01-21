@@ -20,6 +20,7 @@ public class AutoPositioningController: MonoBehaviour
     public string[] AnchorNames = new string[] {"DW51A7","DW8428", "DW8E23", "DW092D" };
     public string ServiceUUID = "680c21d9-c946-4c1f-9c11-baa1c21329e7";
     public string SubscribeCharacteristic = "003bbdf2-c634-4b3d-ab56-7ec889b89a37";
+    public string WriteCharacteristic = "f0f26c9b-2c8c49ac-ab60-fe03def1b40c";
 
     //hard-coding for now, maybe eventually we can have a better UI for this
     private Matrix<double> knownTagPositions = DenseMatrix.OfArray(new double[,] {
@@ -36,14 +37,14 @@ public class AutoPositioningController: MonoBehaviour
 
     BluetoothBytes CurrentBluetoothBytes()
     {
-        return BluetoothBytes.MakeFromBytes(BluetoothConnector.CurrentBytes());
+        return BluetoothBytes.MakeFromBytes(BluetoothConnector.currentBytes());
     }
 
     // Start is called before the first frame update
     void Start()
     {
+        BluetoothConnector.InitializeAction(TagName, ServiceUUID, SubscribeCharacteristic, BluetoothConnector.States.Subscribe);
         BluetoothConnector.StartProcess();
-        BluetoothConnector.InitializeReadOrSubscribeValues(TagName, ServiceUUID, SubscribeCharacteristic, "subscribe");
         foreach (string anchorName in AnchorNames)
         {
             anchorToTestPoints[anchorName] = Vector<double>.Build.Dense(knownTagPositions.RowCount);
@@ -58,10 +59,10 @@ public class AutoPositioningController: MonoBehaviour
 
     void GetAnchorDistancesForTestPoint(int testPointIndex)
     {
-        BluetoothConnector.States bluetoothConnectorState = BluetoothConnector.currentState();
-        byte[] rawBluetoothBytes = BluetoothConnector.CurrentBytes();
+        BluetoothConnector.States bluetoothConnectorAction = BluetoothConnector.currentAction();
+        bool bluetoothConnectorSuccess = BluetoothConnector.actionSuccessful();
 
-        if (bluetoothConnectorState == BluetoothConnector.States.None && rawBluetoothBytes != null)
+        if (bluetoothConnectorAction == BluetoothConnector.States.Subscribe && bluetoothConnectorSuccess)
         {
             BluetoothBytes bluetoothBytes = CurrentBluetoothBytes(); 
             foreach (string anchorName in AnchorNames)
