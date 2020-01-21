@@ -322,17 +322,6 @@ public class BluetoothConnector: MonoBehaviour
         return (uuid1.ToUpper().CompareTo(uuid2.ToUpper()) == 0);
     }
 
-    /*
-    void SendByte (byte value)
-	{
-		byte[] data = new byte[] { value };
-		BluetoothLEHardwareInterface.WriteCharacteristic (_deviceAddress, ServiceUUID, WriteCharacteristic, data, data.Length, true, (characteristicUUID) => {
-			
-			BluetoothLEHardwareInterface.Log ("Write Succeeded");
-		});
-	}
-    */
-
     void OnGUI()
     {
         GUI.skin.textArea.fontSize = 10;
