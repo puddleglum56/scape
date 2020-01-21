@@ -93,9 +93,10 @@ public class AutoPositioningController: MonoBehaviour
     {
         foreach (string anchorName in AnchorNames)
         {
-            //BluetoothConnector.Disconnect();
-            //BluetoothConnector.StartProcess();
-            //BluetoothConnector.InitializeWrite(anchorName, ServiceUUID, WriteCharacteristic);
+            byte[] anchorPositionBytes = BluetoothBytes.MakeFromLocation((int)anchorPositions[anchorName][0], (int)anchorPositions[anchorName][1], (int)anchorPositions[anchorName][2], 100).ToBytes();
+            BluetoothConnector.Disconnect();
+            BluetoothConnector.InitializeAction(anchorName, ServiceUUID, WriteCharacteristic, BluetoothConnector.States.Write, bytesToWrite: anchorPositionBytes );
+            BluetoothConnector.StartProcess();
         }
     }
 

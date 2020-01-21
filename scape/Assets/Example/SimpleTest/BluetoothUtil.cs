@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 public class BluetoothBytes 
 {
@@ -15,6 +16,20 @@ public class BluetoothBytes
     public BluetoothBytes(string _hexString)
     {
         FromString(_hexString);
+    }
+
+    public BluetoothBytes(int x, int y, int z, int quality)
+    {
+        List<byte> xBytes = BitConverter.GetBytes(x).ToList();
+        List<byte> yBytes = BitConverter.GetBytes(y).ToList();
+        List<byte> zBytes = BitConverter.GetBytes(z).ToList();
+        byte qualityBytes = BitConverter.GetBytes(quality)[0];
+
+        List<byte> bytes = new List<byte>();
+        bytes.Concat(xBytes).Concat(yBytes).Concat(zBytes);
+        bytes.Add(qualityBytes);
+        this._bytes = bytes.ToArray();
+        this._hexString = ToHex();
     }
 
 	void FromBytes(byte[] _bytes) 
@@ -32,6 +47,12 @@ public class BluetoothBytes
     public static BluetoothBytes MakeFromBytes(byte[] bytes)
     {
         BluetoothBytes newBluetoothBytes = new BluetoothBytes(bytes);
+        return newBluetoothBytes;
+    }
+
+    public static BluetoothBytes MakeFromLocation(int x, int y, int z, int quality)
+    {
+        BluetoothBytes newBluetoothBytes = new BluetoothBytes(x, y, z, quality);
         return newBluetoothBytes;
     }
 
