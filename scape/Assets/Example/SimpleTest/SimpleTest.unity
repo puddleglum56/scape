@@ -161,6 +161,7 @@ MonoBehaviour:
   - DW092D
   ServiceUUID: 680C21D9-C946-4C1F-9C11-BAA1C21329E7
   SubscribeCharacteristic: 003BBDF2-C634-4B3D-AB56-7EC889B89A37
+  WriteCharacteristic: F0F26C9B-2C8C49AC-AB60-FE03DEF1B40C
   BluetoothConnector: {fileID: 2012943205}
 --- !u!81 &1702792454
 AudioListener:
