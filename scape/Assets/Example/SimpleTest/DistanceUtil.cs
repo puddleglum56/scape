@@ -1,5 +1,6 @@
 ﻿using System;
-using UnityEngine;
+using System.Collections.Generic;
+using System.Linq;
 
 public class DistanceUtil
 {
@@ -35,6 +36,18 @@ public class DistanceUtil
     {
         //Debug.Log(distanceData.ToHex());
         return InfoForNodeSequence(NodeNameToNodeId(nodeName), distanceData, 4, 1);
+    }
+
+    public static int[] Position(BluetoothBytes bluetoothBytes, int startIndex = 1, int coordinateByteLength = 4)
+    {
+        List<byte> bytes = bluetoothBytes.ToBytes().ToList();
+        List<int> coords = new List<int>();
+        for (int i = startIndex; i < bytes.Count - 1; i += coordinateByteLength )
+        {
+            coords.Add(BluetoothBytes.BytesToInt(bytes.GetRange(i, coordinateByteLength).ToArray()));
+        }
+        coords.Add(bytes.Last());
+        return coords.ToArray();
     }
 
 }

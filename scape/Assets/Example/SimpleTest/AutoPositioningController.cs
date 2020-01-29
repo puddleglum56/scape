@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections;
 using UnityEngine;
 
 //From https://github.com/gsongsong/mlat
@@ -38,8 +39,55 @@ public class AutoPositioningController: MonoBehaviour
 
     public BluetoothConnector BluetoothConnector = null;
 
+
     private Dictionary<string, Vector<double>> anchorToTestPoints = new Dictionary<string, Vector<double>>();
     private Dictionary<string, Vector<double>> anchorPositions = new Dictionary<string, Vector<double>>();
+
+    private Dictionary<string, Vector<double>> testAnchorPositions = new Dictionary<string, Vector<double>>
+    {
+        { "DW51A7", null },
+        { "DW8428", null },
+        { "DW8E23", null },
+        { "DW092D", null },
+    };
+
+    void InitializeTestValues()
+    {
+        testAnchorPositions["DW51A7"] = DenseVector.OfArray(new double[] { 1342, 2393, 1676 });
+        testAnchorPositions["DW8428"] = DenseVector.OfArray(new double[] { 1019, 1777, 2792 });
+        testAnchorPositions["DW8E23"] = DenseVector.OfArray(new double[] { -1309, -515, 1160 });
+        testAnchorPositions["DW092D"] = DenseVector.OfArray(new double[] { 1854, -578, 1026 });
+
+    }
+
+    /*
+    void shiftAnchorCoordinatesToPositive()
+    {
+        double minX = double.MaxValue;
+        double minY = double.MaxValue;
+        foreach (string anchorName in AnchorNames)
+        {
+            if (anchorPositions[anchorName][0] > minX)
+                minX = anchorPositions[anchorName][0];
+                minX = anchorPositions[anchorName][0];
+            if (anchorPositions[anchorName][1] > minY)
+                minY = anchorPositions[anchorName][1];
+                minY = anchorPositions[anchorName][1];
+        }
+        if (minX < 0)
+            foreach (string anchorName in AnchorNames)
+            {
+                anchorPositions[anchorName][0] += -minX;
+                testAnchorPositions[anchorName][0] += -minX;
+            }
+        if (minY < 0)
+            foreach (string anchorName in AnchorNames)
+            {
+                anchorPositions[anchorName][1] += -minY;
+                testAnchorPositions[anchorName][1] += -minY;
+            }
+    }
+    */
 
     BluetoothBytes CurrentBluetoothBytes()
     {
@@ -89,14 +137,25 @@ public class AutoPositioningController: MonoBehaviour
         }
     }
 
-    void PushAnchorPositions()
+    IEnumerator PushAnchorPositions()
     {
+        BluetoothConnector.Disconnect();
+        yield return new WaitUntil(() => BluetoothConnector.currentState() == BluetoothConnector.States.Disconnected);
+        BluetoothConnector.Reset();
+
         foreach (string anchorName in AnchorNames)
         {
-            byte[] anchorPositionBytes = BluetoothBytes.MakeFromLocation((int)anchorPositions[anchorName][0], (int)anchorPositions[anchorName][1], (int)anchorPositions[anchorName][2], 100).ToBytes();
-            BluetoothConnector.Disconnect();
+            Debug.Log("pushing anchor " + anchorName);
+            BluetoothBytes positionBytes = BluetoothBytes.MakeFromLocation((int)anchorPositions[anchorName][0], (int)anchorPositions[anchorName][1], (int)anchorPositions[anchorName][2], 100);
+            Debug.Log("would push " + positionBytes.ToHex());
+            byte[] anchorPositionBytes = positionBytes.ToBytes();
             BluetoothConnector.InitializeAction(anchorName, ServiceUUID, WriteCharacteristic, BluetoothConnector.States.Write, bytesToWrite: anchorPositionBytes );
             BluetoothConnector.StartProcess();
+            yield return new WaitUntil(() => BluetoothConnector.actionSuccessful());
+            BluetoothConnector.Disconnect();
+            yield return new WaitUntil(() => BluetoothConnector.currentState() == BluetoothConnector.States.Disconnected);
+            BluetoothConnector.Reset();
+
         }
     }
 
@@ -122,6 +181,7 @@ public class AutoPositioningController: MonoBehaviour
         if (GUI.Button(new Rect(0, 450, Screen.width, 100), "Done"))
         {
             CalculateAnchorPositions();
+            StartCoroutine(PushAnchorPositions());
         }
 
         if (GUI.Button(new Rect(0, 560, Screen.width, 100), "Disconnect"))

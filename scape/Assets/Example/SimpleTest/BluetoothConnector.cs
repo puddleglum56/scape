@@ -45,7 +45,7 @@ public class BluetoothConnector: MonoBehaviour
     byte[] _dataToWrite = null;
     private bool _rssiOnly = false;
     private int _rssi = 0;
-    private States _action = States.Subscribe;
+    private States _action = States.None;
     private bool _actionSuccess = false;
 
     private string StateToString(States state)
@@ -106,7 +106,6 @@ public class BluetoothConnector: MonoBehaviour
     public void StartProcess()
     {
         Debug.Log("before reset");
-        Reset();
         if (!_initialized)
         {
             Debug.Log("before conditional");
@@ -268,7 +267,7 @@ public class BluetoothConnector: MonoBehaviour
                             // we don't have a great way to set the state other than waiting until we actually got
                             // some data back. For this demo with the rfduino that means pressing the button
                             // on the rfduino at least once before the GUI will update.
-                            _state = States.None;
+                            //_state = States.None;
 
                             // we received some data from the device
                             _dataBytes = bytes;

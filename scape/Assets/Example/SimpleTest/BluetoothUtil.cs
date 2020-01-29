@@ -26,7 +26,9 @@ public class BluetoothBytes
         byte qualityBytes = BitConverter.GetBytes(quality)[0];
 
         List<byte> bytes = new List<byte>();
-        bytes.Concat(xBytes).Concat(yBytes).Concat(zBytes);
+        bytes.AddRange(xBytes);
+        bytes.AddRange(yBytes);
+        bytes.AddRange(zBytes);
         bytes.Add(qualityBytes);
         this._bytes = bytes.ToArray();
         this._hexString = ToHex();
@@ -43,6 +45,12 @@ public class BluetoothBytes
         this._hexString = _hexString;
         this._bytes = HexStringToBytes(_hexString);
 	}
+
+    public static BluetoothBytes MakeFromHex(string _hexString)
+    {
+        BluetoothBytes newBluetoothBytes = new BluetoothBytes(_hexString);
+        return newBluetoothBytes;
+    }
 
     public static BluetoothBytes MakeFromBytes(byte[] bytes)
     {
